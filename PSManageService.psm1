@@ -1,4 +1,4 @@
-function PSGetService {
+function Get-PSService {
     [cmdletbinding()]
     param (
         $Computers,
@@ -101,7 +101,7 @@ function PSGetService {
     return $AllStatus #| Select-object Computer, Name, DisplayName, Status
 }
 
-function PSGetServiceNoRunspaces {
+function Get-PSServiceNoRunspaces {
     [cmdletbinding()]
     param (
         $Computers,
