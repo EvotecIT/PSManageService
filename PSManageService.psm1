@@ -1,6 +1,3 @@
-
-
-
 function PSGetService {
     [cmdletbinding()]
     param (
@@ -103,7 +100,6 @@ function PSGetService {
     # return Data
     return $AllStatus #| Select-object Computer, Name, DisplayName, Status
 }
-
 
 function PSGetServiceNoRunspaces {
     [cmdletbinding()]
