@@ -2,7 +2,7 @@
 
 *Proof of concept* for reading services (*Get-Service -ComputerName <computer> -Name <service>*) with runspaces (**parallel processing**)
 
-### Project has 2 functions
+###### Project has 2 functions
 * **PSGetServiceNoRunspaces** is just a wrapper around *Get-Service*. Merely makes sure that there is similar output/time measuring
 * **PSGetService** - is runspaces in action.
 
