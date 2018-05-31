@@ -1,3 +1,6 @@
+
+Import-Module PSManageService -Force
+
 $Computers = 'AD1' #, 'AD2'
 $Services = 'WinRM', 'VSS'
 

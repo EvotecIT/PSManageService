@@ -8,6 +8,8 @@ function PSGetService {
         $Services
     )
     if ($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent) { $Verbose = $true } else { $Verbose = $false }
+    Write-Verbose 'Get-Service - Starting....'
+    $MeasureTotal = [System.Diagnostics.Stopwatch]::StartNew() # Timer Start
 
     ### Define Runspace START
     $pool = [RunspaceFactory]::CreateRunspacePool(1, [int]$env:NUMBER_OF_PROCESSORS + 1)
@@ -34,23 +36,25 @@ function PSGetService {
                 }
                 $GetService = Get-Service -ComputerName $Computer -Name $ServiceName
                 if ($GetService) {
-                    #Add-Member -InputObject $ServiceStatus -MemberType NoteProperty -Name 'Computer' -Value $Computer -Force
-
-                    $ServiceStatus = @{}
+                    $ServiceStatus = [ordered] @{}
                     $ServiceStatus.Computer = $Computer
                     $ServiceStatus.Status = $GetService.Status
                     $ServiceStatus.Name = $GetService.Name
                     $ServiceStatus.DisplayName = $GetService.DisplayName
+                    $ServiceStatus.ServiceType = $GetService.ServiceType
+                    $ServiceStatus.StartType = $GetService.StartType
                     $ServiceStatus.TimeProcessing = $Measure.Elapsed
                 } else {
-                    $ServiceStatus = @{}
+                    $ServiceStatus = [ordered]@{}
                     $ServiceStatus.Computer = $Computer
                     $ServiceStatus.Status = 'N/A'
                     $ServiceStatus.Name = $ServiceName
                     $ServiceStatus.DisplayName = 'N/A'
+                    $ServiceStatus.ServiceType = 'N/A'
+                    $ServiceStatus.StartType = 'N/A'
                     $ServiceStatus.TimeProcessing = $Measure.Elapsed
                 }
-                Write-Verbose "Get-Service - [i] Processed $Computer with $ServiceName"
+                Write-Verbose "Get-Service - [i] Processed $Computer with $ServiceName - Time elapsed: $($Measure.Elapsed)"
                 $Measure.Stop()
                 return $ServiceStatus.ForEach( {[PSCustomObject]$_})
             }
@@ -86,7 +90,8 @@ function PSGetService {
     $pool.Close()
     $pool.Dispose()
     ### End Runspaces END
-
+    $MeasureTotal.Stop()
+    Write-Verbose "Get-Service - Ending....$($measureTotal.Elapsed)"
     # return Data
     return $AllStatus #| Select-object Computer, Name, DisplayName, Status
 }
