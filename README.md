@@ -1,4 +1,4 @@
-# PSManageService
+### PSManageService
 
 *Proof of concept* for reading services (*Get-Service -ComputerName <computer> -Name <service>*) with runspaces (**parallel processing**)
 
@@ -7,13 +7,13 @@
 * **PSGetService** - is runspaces in action.
 
 
-### Things to consider
+###### Things to consider
 * The difference is 3minutes vs 42 seconds (for querying 10 servers for 2 services).
 * Where the 42 seconds is actually wait time for AD2 because AD2 is denying connectivity.
 * Since we ask AD2 x 3 times the 1st method takes over 3 minutes because it has to wait for termination before processing others.
 * Parallel version doesn't have to wait. It just waits in the end where all 3x AD2 terminate at similar time.
 
-### Results
+###### Results
 
 ```
 
@@ -94,7 +94,8 @@ VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processing AD1 w
 VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processed AD1 with VSS - Time elapsed: 00:00:00.0087472
 VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processing AD1 with VSS
 VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processed AD1 with VSS - Time elapsed: 00:00:00.0073372
-VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processing EVO1 with VSSVERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processed EVO1 with VSS - Time elapsed: 00:00:00.0019791
+VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processing EVO1 with VSS
+VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processed EVO1 with VSS - Time elapsed: 00:00:00.0019791
 VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processing EVO1 with VSS
 VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processed EVO1 with VSS - Time elapsed: 00:00:00.0018405
 VERBOSE: Get-Service - Verbose from runspace: Get-Service - [i] Processing AD1 with VSS
