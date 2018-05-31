@@ -27,26 +27,31 @@ function PSGetService {
                     [string]$ServiceName,
                     [bool] $Verbose
                 )
+                Write-Verbose "Get-Service - [i] Processing $Computer with $ServiceName"
+                $Measure = [System.Diagnostics.Stopwatch]::StartNew() # Timer Start
                 if ($Verbose) {
                     $verbosepreference = 'continue'
                 }
-                $ServiceStatus = Get-Service -ComputerName $Computer -Name $ServiceName
-                if ($ServiceStatus) {
+                $GetService = Get-Service -ComputerName $Computer -Name $ServiceName
+                if ($GetService) {
                     #Add-Member -InputObject $ServiceStatus -MemberType NoteProperty -Name 'Computer' -Value $Computer -Force
 
                     $ServiceStatus = @{}
                     $ServiceStatus.Computer = $Computer
-                    $ServiceStatus.Status = $ServiceStatus.Status
-                    $ServiceStatus.Name = $ServiceStatus.Name
-                    $ServiceStatus.DisplayName = $ServiceStatus.DisplayName
+                    $ServiceStatus.Status = $GetService.Status
+                    $ServiceStatus.Name = $GetService.Name
+                    $ServiceStatus.DisplayName = $GetService.DisplayName
+                    $ServiceStatus.TimeProcessing = $Measure.Elapsed
                 } else {
                     $ServiceStatus = @{}
                     $ServiceStatus.Computer = $Computer
                     $ServiceStatus.Status = 'N/A'
                     $ServiceStatus.Name = $ServiceName
-                    $ServiceStatus.DisplayName = ''
+                    $ServiceStatus.DisplayName = 'N/A'
+                    $ServiceStatus.TimeProcessing = $Measure.Elapsed
                 }
-                Write-Verbose "Get-Service - Processed $Computer with $ServiceName"
+                Write-Verbose "Get-Service - [i] Processed $Computer with $ServiceName"
+                $Measure.Stop()
                 return $ServiceStatus.ForEach( {[PSCustomObject]$_})
             }
             ### Script to RUN END
@@ -83,5 +88,5 @@ function PSGetService {
     ### End Runspaces END
 
     # return Data
-    return $AllStatus | Select-object Computer, Name, DisplayName, Status
+    return $AllStatus #| Select-object Computer, Name, DisplayName, Status
 }
