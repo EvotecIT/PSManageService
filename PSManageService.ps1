@@ -32,7 +32,13 @@ function PSGetService {
                 }
                 $ServiceStatus = Get-Service -ComputerName $Computer -Name $ServiceName
                 if ($ServiceStatus) {
-                    Add-Member -InputObject $ServiceStatus -MemberType NoteProperty -Name 'Computer' -Value $Computer -Force
+                    #Add-Member -InputObject $ServiceStatus -MemberType NoteProperty -Name 'Computer' -Value $Computer -Force
+
+                    $ServiceStatus = @{}
+                    $ServiceStatus.Computer = $Computer
+                    $ServiceStatus.Status = $ServiceStatus.Status
+                    $ServiceStatus.Name = $ServiceStatus.Name
+                    $ServiceStatus.DisplayName = $ServiceStatus.DisplayName
                 } else {
                     $ServiceStatus = @{}
                     $ServiceStatus.Computer = $Computer
@@ -41,7 +47,7 @@ function PSGetService {
                     $ServiceStatus.DisplayName = ''
                 }
                 Write-Verbose "Get-Service - Processed $Computer with $ServiceName"
-                return $ServiceStatus
+                return $ServiceStatus.ForEach( {[PSCustomObject]$_})
             }
             ### Script to RUN END
 
@@ -79,8 +85,3 @@ function PSGetService {
     # return Data
     return $AllStatus | Select-object Computer, Name, DisplayName, Status
 }
-
-$Computers = 'AD1', 'AD2'
-$Services = 'WinRM', 'VSS'
-
-PSGetService -Computers $Computers -Services $Services -Verbose
