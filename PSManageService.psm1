@@ -1,3 +1,51 @@
+function New-Runspace {
+    param (
+        [int] $minRunspaces = 1,
+        [int] $maxRunspaces = [int]$env:NUMBER_OF_PROCESSORS + 1
+    )
+    $pool = [RunspaceFactory]::CreateRunspacePool($minRunspaces, $maxRunspaces)
+    $pool.ApartmentState = "MTA"
+    $pool.Open()
+    return $pool
+}
+function Start-Runspace {
+    param (
+        $ScriptBlock,
+        [hashtable] $Parameters,
+        $pool
+    )
+    $runspace = [PowerShell]::Create()
+    $null = $runspace.AddScript($ScriptBlock)
+    $null = $runspace.AddParameters($Parameters)
+    $runspace.RunspacePool = $pool
+    return [PSCustomObject]@{ Pipe = $runspace; Status = $runspace.BeginInvoke() }
+}
+
+function Stop-Runspace {
+    param(
+        $Runspaces,
+        $FunctionName,
+        $Pool
+    )
+    $List = @()
+    while ($Runspaces.Status -ne $null) {
+        $completed = $runspaces | Where-Object { $_.Status.IsCompleted -eq $true }
+        foreach ($runspace in $completed) {
+            foreach ($e in $($runspace.Pipe.Streams.Error)) {
+                Write-Verbose "$FunctionName - Error from runspace: $e"
+            }
+            foreach ($v in $($runspace.Pipe.Streams.Verbose)) {
+                Write-Verbose "$FunctionName - Verbose from runspace: $v"
+            }
+            $List += $runspace.Pipe.EndInvoke($runspace.Status)
+            $runspace.Status = $null
+        }
+    }
+    $pool.Close()
+    $pool.Dispose()
+    return $List
+}
+
 function Get-PSService {
     [cmdletbinding()]
     param (
@@ -16,13 +64,11 @@ function Get-PSService {
     $MeasureTotal = [System.Diagnostics.Stopwatch]::StartNew() # Timer Start
 
     ### Define Runspace START
-    $pool = [RunspaceFactory]::CreateRunspacePool(1, [int]$env:NUMBER_OF_PROCESSORS + 1)
-    $pool.ApartmentState = "MTA"
-    $pool.Open()
+    $pool = New-Runspace
     $runspaces = @()
     ### Define Runspace END
 
-    $AllStatus = @()
+
     foreach ($ServiceName in $Services) {
         foreach ($Computer in $Computers) {
 
@@ -66,39 +112,23 @@ function Get-PSService {
             ### Script to RUN END
 
             # processing runspace start
-            $runspace = [PowerShell]::Create()
-            $null = $runspace.AddScript($ScriptBlock)
-            $null = $runspace.AddParameter('Computer', $Computer)
-            $null = $runspace.AddParameter('ServiceName', $ServiceName)
-            $null = $runspace.AddParameter('Verbose', $Verbose)
-            $runspace.RunspacePool = $pool
-            $runspaces += [PSCustomObject]@{ Pipe = $runspace; Status = $runspace.BeginInvoke() }
+            $Parameters = @{
+                Computer    = $Computer
+                ServiceName = $ServiceName
+                Verbose     = $Verbose
+            }
+            $runspaces += Start-Runspace -ScriptBlock $ScriptBlock -Parameters $Parameters -pool $pool
             # processing runspace end
 
         }
     }
-
     ### End Runspaces START
-    while ($runspaces.Status -ne $null) {
-        $completed = $runspaces | Where-Object { $_.Status.IsCompleted -eq $true }
-        foreach ($runspace in $completed) {
-            foreach ($e in $($runspace.Pipe.Streams.Error)) {
-                Write-Verbose "Get-Service - Error from runspace: $e"
-            }
-            foreach ($v in $($runspace.Pipe.Streams.Verbose)) {
-                Write-Verbose "Get-Service - Verbose from runspace: $v"
-            }
-            $AllStatus += $runspace.Pipe.EndInvoke($runspace.Status)
-            $runspace.Status = $null
-        }
-    }
-    $pool.Close()
-    $pool.Dispose()
+    $List = Stop-Runspace -Runspaces $runspaces -FunctionName 'Get-Service' -Pool $pool
     ### End Runspaces END
     $MeasureTotal.Stop()
     Write-Verbose "Get-Service - Ending....$($measureTotal.Elapsed)"
-    # return Data
-    return $AllStatus #| Select-object Computer, Name, DisplayName, Status
+
+    return $List
 }
 
 function Get-PSServiceNoRunspaces {
