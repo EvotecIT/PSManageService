@@ -60,8 +60,8 @@ function Get-PSService {
     $MeasureTotal = [System.Diagnostics.Stopwatch]::StartNew() # Timer Start
 
     ### Define Runspace START
-    $pool = New-Runspace -MaxRunspaces $maxRunspaces
     $runspaces = @()
+    $pool = New-Runspace -MaxRunspaces $maxRunspaces
     ### Define Runspace END
 
 
