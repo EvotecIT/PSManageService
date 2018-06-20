@@ -2,7 +2,7 @@
 Clear-Host
 #Install-Module PSManageService
 Import-Module PSManageService -Force
-$Computers = 'AD1'
+$Computers = 'Evo1'
 #$Computers = 'AD2', 'AD1', 'AD1', 'EVO1', 'AD1', 'EVO1', 'EVO1', 'AD1', 'AD2', 'AD2'
 $Services = 'WinRM', 'VSS'
 
@@ -11,5 +11,7 @@ $Services = 'WinRM', 'VSS'
 
 # This is the REAL speedup
 Get-PSService -Computers $Computers -Services $Services -Verbose | Format-Table -AutoSize
+
+Get-PsService -Computers $Computers -Verbose | ft -a
 
 #Get-CimInstance -ClassName Win32_Service -Filter 'DisplayName = "WinRM" OR DisplayName = "VSS"' -ComputerName $Computers
